@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciamento de Pessoas com Gráficos e Filtros</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      color: #4A90E2;
+    }
+    #filterForm, #dataForm, #editForm, #loginForm {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin: 20px auto;
+      max-width: 900px;
+    }
+    input, button, select {
+      padding: 10px;
+      margin: 5px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 100%;
+      max-width: 200px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #dataContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 900px;
+      margin: 20px auto;
+    }
+    .person-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    .person-card img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .person-info {
+      flex-grow: 1;
+    }
+    .person-info a {
+      color: #4A90E2;
+      text-decoration: none;
+    }
+    .delete-button, .edit-button {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: #ff6b6b;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .edit-button {
+      background: #FFA500;
+    }
+    #chartContainer {
+      width: 80%;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    #myChart {
+      max-width: 100%;
+    }
+    #editForm, #loginForm {
+      display: none;
+    }
+    @media (max-width: 600px) {
+      #filterForm, #dataForm, #editForm {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Armazenar Dados de Pessoas</h1>
+
+  <!-- Login -->
+  <form id="loginForm" onsubmit="checkPassword(); return false;">
+    <h3>Digite a senha para acessar:</h3>
+    <input type="password" id="password" placeholder="Senha" required />
+    <button type="submit">Entrar</button>
+  </form>
+
+  <!-- Filtro no topo -->
+  <form id="filterForm" onsubmit="applyFilters(); return false;" style="display: none;">
+    <h3>Filtros</h3>
+    <input type="number" id="filterIdade" placeholder="Idade mínima" />
+    <input type="number" id="filterBeleza" placeholder="Beleza mínima" />
+    <input type="number" id="filterDificuldade" placeholder="Dificuldade mínima" />
+    <input type="number" id="filterGostosura" placeholder="Gostosura mínima" />
+    <button type="submit">Aplicar Filtros</button>
+  </form>
+
+  <form id="dataForm" style="display: none;">
+    <input type="text" id="nome" placeholder="Nome" required />
+    <input type="number" id="idade" placeholder="Idade" required />
+    <input type="number" id="beleza" placeholder="Beleza (1-10)" required />
+    <input type="number" id="dificuldade" placeholder="Dificuldade (1-10)" required />
+    <input type="number" id="gostosura" placeholder="Gostosura (1-10)" required />
+    <input type="text" id="pontosFortes" placeholder="Pontos Fortes (ex: peito, bunda)" required />
+    
+    <select id="cidade" required>
+      <option value="">Selecione a Cidade</option>
+      <option value="Recife">Recife</option>
+      <option value="Olinda">Olinda</option>
+      <option value="Jaboatão dos Guararapes">Jaboatão dos Guararapes</option>
+      <option value="São Lourenço da Mata">São Lourenço da Mata</option>
+      <option value="Camaragibe">Camaragibe</option>
+      <option value="Paulista">Paulista</option>
+      <option value="Igarassu">Igarassu</option>
+      <option value="Itamaracá">Itamaracá</option>
+      <option value="Abreu e Lima">Abreu e Lima</option>
+      <option value="Itapissuma">Itapissuma</option>
+    </select>
+
+    <input type="text" id="bairro" placeholder="Bairro" required />
+    
+    <select id="tipoCorporal" required>
+      <option value="">Selecione o Tipo Corporal</option>
+      <option value="magra3">Magra 3</option>
+      <option value="magra2">Magra 2</option>
+      <option value="magra1">Magra 1</option>
+      <option value="gostosa">Gostosa</option>
+      <option value="gostosona">Gostosona</option>
+      <option value="gordinha">Gordinha</option>
+      <option value="gorda">Gorda</option>
+    </select>
+
+    <select id="corCabelo" required>
+      <option value="">Selecione a Cor do Cabelo</option>
+      <option value="cacheado">Cacheado</option>
+      <option value="loiro">Loiro</option>
+      <option value="ruivo">Ruivo</option>
+      <option value="moreno">Moreno</option>
+      <option value="outros">Outros</option>
+    </select>
+
+    <input type="url" id="instagram" placeholder="Link para Instagram" required />
+    <input type="file" id="photo" accept="image/*" />
+    <button type="button" id="saveButton" onclick="saveData()">Salvar Dados</button>
+  </form>
+
+  <h2>Dados Salvos</h2>
+  <div id="dataContainer"></div>
+
+  <h2>Configurar Gráficos</h2>
+  <label for="dataMetric">Escolha a Métrica:</label>
+  <select id="dataMetric" onchange="generateChart()">
+    <option value="idade">Idade</option>
+    <option value="beleza">Beleza</option>
+    <option value="dificuldade">Dificuldade</option>
+    <option value="gostosura">Gostosura</option>
+    <option value="cidade">Cidade</option>
+    <option value="bairro">Bairro</option>
+    <option value="tipoCorporal">Tipo Corporal</option>
+  </select>
+
+  <label for="chartType">Escolha o Tipo de Gráfico:</label>
+  <select id="chartType" onchange="generateChart()">
+    <option value="bar">Gráfico de Barras</option>
+    <option value="line">Gráfico de Linhas</option>
+    <option value="pie">Gráfico de Pizza</option>
+  </select>
+
+  <div id="chartContainer">
+    <canvas id="myChart"></canvas>
+  </div>
+
+  <script>
+    const pessoas = JSON.parse(localStorage.getItem('pessoas')) || [];
+    const password = "bumbumguloso2024";
+    
+    function checkPassword() {
+      const userPassword = document.getElementById('password').value;
+      if (userPassword === password) {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('filterForm').style.display = 'flex';
+        document.getElementById('dataForm').style.display = 'flex';
+      } else {
+        alert("Senha incorreta!");
+      }
+    }
+
+    // Restante das funções para salvar dados, filtros e geração de gráfico
+
+  </script>
+</body>
+</html>
